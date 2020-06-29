@@ -1,13 +1,23 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, TextInput, FlatList} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ActivityIndicator,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 
 import {Row, Separator} from '../components/Row';
-import users from '../data/users';
+import axios from 'axios';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {AuthContext} from '../contexts/AuthContext';
+import {UserContext} from '../contexts/UserConetext';
 
 export default function ContactList({navigation}) {
   const styles = StyleSheet.create({
     viewStyle: {
-      justifyContent: 'center',
       flex: 1,
       padding: 10,
       paddingBottom: 0,
@@ -26,66 +36,103 @@ export default function ContactList({navigation}) {
   });
 
   const [searchField, setSearchField] = useState('');
-  const [clients, setclients] = useState(users);
-  const [filteredclients, setFilteredclients] = useState(users);
-  const getSystemInfo = () => {
-    // fetch('/cpu')
-    //   .then((res) => res.json())
-    //   .then((data) => {
-    //     if (percent.length >= 10) percent.shift();
-    //     percent.push({
-    //       second: percent[percent.length - 1].second + 1,
-    //       utilization: data.cpuUtilization.percent,
-    //     });
-    //
-    //     data.cpuUtilization.procInfo = data.cpuUtilization.procInfo.brand;
-    //     tempData = data.cpuUtilization;
-    //     tempData.percent = percent;
-    //     setCurrentStats(tempData);
-    //   });
-  };
+  const [isloading, setisLoading] = useState(true);
+  const [clients, setclients] = useState([]);
+  const [filteredclients, setFilteredclients] = useState([]);
+  const {logout} = React.useContext(AuthContext);
+  useEffect(() => {
+    console.log('read');
+    axios
+      .get(`https://myappointmentsystem.herokuapp.com/getAllServiceProvider`)
+      .then((res) => {
+        let data = res.data.filter(function (item) {
+          return item.hasOwnProperty('timeSlot');
+        });
+        setclients(data);
+        setFilteredclients(data);
+        console.log(data);
+        setisLoading(false);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  }, []);
 
   useEffect(() => {
     setFilteredclients(
       clients.filter((user) =>
-        user.name.first.toLowerCase().includes(searchField.toLowerCase()),
+        user.name.toLowerCase().includes(searchField.toLowerCase()),
       ),
     );
   }, [searchField]);
 
   return (
     <View style={styles.viewStyle}>
-      <TextInput
-        style={styles.textInputStyle}
-        value={searchField}
-        onChangeText={(text) => setSearchField(text)}
-        underlineColorAndroid="transparent"
-        placeholder="Search Here"
-      />
-      <FlatList
-        data={filteredclients}
-        keyExtractor={(item) => {
-          return `${item.id.value}-${item.phone}`;
-        }}
-        renderItem={({item}) => {
-          const name = `${item.name.first} ${item.name.last}`;
+      {isloading ? (
+        <ActivityIndicator size="small" color="black" />
+      ) : (
+        <View>
+          <View style={{flexDirection: 'row'}}>
+            <View style={{flex: 1}}>
+              <TextInput
+                style={styles.textInputStyle}
+                value={searchField}
+                onChangeText={(text) => setSearchField(text)}
+                underlineColorAndroid="transparent"
+                placeholder="Search Here"
+              />
+            </View>
+            <View style={{}}>
+              <TouchableOpacity
+                onPress={() => {
+                  logout();
+                }}
+                style={{
+                  marginHorizontal: 4,
+                  marginVertical: 4,
+                }}>
+                <MaterialCommunityIcons
+                  name={'logout'}
+                  size={30}
+                  color="#009688"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-          return (
-            <Row
-              image={{
-                uri: 'https://randomuser.me/api/portraits/thumb/women/77.jpg',
-              }}
-              title={name}
-              subtitle={item.email}
-              onPress={() => navigation.push('ContactDetails', {user: item})}
-            />
-          );
-        }}
-        ItemSeparatorComponent={Separator}
-        ListHeaderComponent={() => <Separator />}
-        ListFooterComponent={() => <Separator />}
-        contentContainerStyle={{paddingVertical: 20}}
-      />
+          <FlatList
+            data={filteredclients}
+            keyExtractor={(item) => {
+              return `${item._id}`;
+            }}
+            renderItem={({item, index}) => {
+              const name = `${item.name}`;
+
+              return (
+                <Row
+                  image={{
+                    uri: `https://randomuser.me/api/portraits/thumb/men/${index}.jpg`,
+                  }}
+                  title={name}
+                  subtitle={item.userName}
+                  slotFrom={item.timeSlot.from}
+                  slotTo={item.timeSlot.to}
+                  onPress={() =>
+                    navigation.push('ContactDetails', {
+                      user: item,
+                      index: index,
+                    })
+                  }
+                />
+              );
+            }}
+            ItemSeparatorComponent={Separator}
+            ListHeaderComponent={() => <Separator />}
+            ListFooterComponent={() => <Separator />}
+            contentContainerStyle={{paddingVertical: 20}}
+          />
+        </View>
+      )}
     </View>
   );
 }

@@ -7,12 +7,14 @@ import FilledButton from '../components/FilledButton';
 import {AuthContainer} from '../components/AuthContainer';
 import ErrorClass from '../components/ErrorClass';
 import TextButton from '../components/TextButton';
+import {AuthContext} from '../contexts/AuthContext';
 
 export function SigninScreen({navigation}) {
-  const [email, setEmail] = React.useState('bithovendev@gmail.com');
-  const [password, setPassword] = React.useState('abc');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
+  const {signIn} = React.useContext(AuthContext);
 
   return (
     <AuthContainer>
@@ -35,6 +37,9 @@ export function SigninScreen({navigation}) {
       <FilledButton
         title={'Login'}
         style={styles.loginButton}
+        onPress={() => {
+          signIn({email, password});
+        }}
         // onPress={async () => {
         //   try {
         //     setLoading(true);

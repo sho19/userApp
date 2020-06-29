@@ -1,5 +1,18 @@
-import React from 'react';
-import {StyleSheet, View, Text} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ActivityIndicator,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import {Row, Separator} from '../components/Row';
+import axios from 'axios';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {AuthContext} from '../contexts/AuthContext';
+import {UserContext} from '../contexts/UserConetext';
 import {AuthContainer} from '../components/AuthContainer';
 import IconButton from '../components/IconButton';
 import {Heading} from '../components/Heading';
@@ -9,69 +22,95 @@ import FilledButton from '../components/FilledButton';
 import Loading from '../components/Loading';
 
 export function MyAppointmentsScreen({navigation}) {
-  const [email, setEmail] = React.useState('sho19@gmail.com');
-  const [password, setPassword] = React.useState('abc');
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
+  const styles = StyleSheet.create({
+    viewStyle: {
+      flex: 1,
+      padding: 10,
+      paddingBottom: 0,
+      height: '100%',
+    },
+    textStyle: {
+      padding: 10,
+    },
+    textInputStyle: {
+      height: 40,
+      borderWidth: 1,
+      paddingLeft: 10,
+      borderColor: '#009688',
+      backgroundColor: '#FFFFFF',
+    },
+  });
+
+  const [searchField, setSearchField] = useState('');
+  const [isloading, setisLoading] = useState(true);
+  const [filteredclients, setFilteredclients] = useState([]);
+  const userData = React.useContext(UserContext);
+  const {logout} = React.useContext(AuthContext);
+
+  useEffect(() => {
+    console.log('read');
+    axios
+      .get(
+        `https://myappointmentsystem.herokuapp.com/appointments/${userData.data.userName}?category=customer`,
+      )
+      .then((res) => {
+        setFilteredclients(res.data);
+        console.log(res.data);
+        setisLoading(false);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  }, []);
 
   return (
-    <AuthContainer>
-      <Heading style={styles.title}>REGISTRATION</Heading>
-      <ErrorClass error={error} />
+    <View style={styles.viewStyle}>
+      {isloading ? (
+        <ActivityIndicator size="small" color="black" />
+      ) : (
+        <View>
+          <View style={{flexDirection: 'row'}}>
+            <View style={{}}>
+              <TouchableOpacity
+                onPress={() => {
+                  logout();
+                }}
+                style={{
+                  marginHorizontal: 4,
+                  marginVertical: 4,
+                }}>
+                <MaterialCommunityIcons
+                  name={'logout'}
+                  size={30}
+                  color="#009688"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-      <IconButton
-        style={styles.closeIcon}
-        name={'downcircle'}
-        onPress={() => {
-          navigation.pop();
-        }}
-      />
-      <Input
-        style={styles.input}
-        placeholder={'Email'}
-        keyboardType={'email-address'}
-        value={email}
-        onChangeText={setEmail}
-      />
-      <Input
-        style={styles.input}
-        placeholder={'password'}
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+          <FlatList
+            data={filteredclients[0].myBookings}
+            keyExtractor={(item) => {
+              return `${item.date}-${item.time}}`;
+            }}
+            renderItem={({item, index}) => {
+              const name = `${item.name}`;
 
-      <FilledButton
-        title={'Register'}
-        style={styles.loginButton}
-        // onPress={async () => {
-        //   try {
-        //     setLoading(true);
-        //     await register(email, password);
-        //     navigation.pop();
-        //   } catch (e) {
-        //     setError(e.message);
-        //     setLoading(false);
-        //   }
-        // }}
-      />
-    </AuthContainer>
+              return (
+                <Row
+                  title={item.clientName}
+                  subtitle={item.date}
+                  slotFrom={item.time}
+                />
+              );
+            }}
+            ItemSeparatorComponent={Separator}
+            ListHeaderComponent={() => <Separator />}
+            ListFooterComponent={() => <Separator />}
+            contentContainerStyle={{paddingVertical: 20}}
+          />
+        </View>
+      )}
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  title: {
-    marginBottom: 40,
-  },
-  input: {
-    marginVertical: 8,
-  },
-  loginButton: {
-    marginVertical: 32,
-  },
-  closeIcon: {
-    position: 'absolute',
-    top: 60,
-    right: 16,
-  },
-});

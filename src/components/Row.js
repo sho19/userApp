@@ -29,6 +29,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 2,
   },
+  timeSlot: {
+    color: '#666',
+  },
   separator: {
     backgroundColor: '#ececec',
     height: 1,
@@ -39,15 +42,21 @@ const styles = StyleSheet.create({
   },
 });
 
-export const Row = ({image, title, subtitle, onPress}) => (
+export const Row = ({image, title, subtitle, slotFrom, slotTo, onPress}) => (
   <TouchableOpacity onPress={onPress} style={styles.container}>
-    <View>
-      <Image source={image} style={styles.image} />
-    </View>
+    <View>{image && <Image source={image} style={styles.image} />}</View>
     <View style={styles.content}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
-      <Text style={styles.subtitle}>{subtitle}</Text>
+      {slotTo ? (
+        <Text style={styles.timeSlot}>
+          Available From:{slotFrom}:00 To: {slotTo}:00
+        </Text>
+      ) : (
+        <Text style={styles.timeSlot}>
+          Appointment:{slotFrom}
+        </Text>
+      )}
     </View>
     <View style={styles.right}></View>
   </TouchableOpacity>

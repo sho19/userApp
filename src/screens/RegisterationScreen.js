@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, Text} from 'react-native';
+import {StyleSheet, ToastAndroid} from 'react-native';
 import {AuthContainer} from '../components/AuthContainer';
 import IconButton from '../components/IconButton';
 import {Heading} from '../components/Heading';
@@ -7,10 +7,14 @@ import ErrorClass from '../components/ErrorClass';
 import Input from '../components/Input';
 import FilledButton from '../components/FilledButton';
 import Loading from '../components/Loading';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {AuthContext} from '../contexts/AuthContext';
 
 export function RegisterationScreen({navigation}) {
-  const [email, setEmail] = React.useState('sho19@gmail.com');
-  const [password, setPassword] = React.useState('abc');
+  const {signUp} = React.useContext(AuthContext);
+  const [name, setName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
 
@@ -19,12 +23,21 @@ export function RegisterationScreen({navigation}) {
       <Heading style={styles.title}>REGISTRATION</Heading>
       <ErrorClass error={error} />
 
-      <IconButton
+      <Icon
         style={styles.closeIcon}
-        name={'downcircle'}
+        name={'md-close-circle'}
+        size={26}
+        color={'#009688'}
         onPress={() => {
           navigation.pop();
         }}
+      />
+
+      <Input
+        style={styles.input}
+        placeholder={'Name'}
+        value={name}
+        onChangeText={setName}
       />
       <Input
         style={styles.input}
@@ -44,16 +57,11 @@ export function RegisterationScreen({navigation}) {
       <FilledButton
         title={'Register'}
         style={styles.loginButton}
-        // onPress={async () => {
-        //   try {
-        //     setLoading(true);
-        //     await register(email, password);
-        //     navigation.pop();
-        //   } catch (e) {
-        //     setError(e.message);
-        //     setLoading(false);
-        //   }
-        // }}
+        onPress={() => {
+          if (name != '' && email != '' && password != '')
+            signUp({name, email, password});
+          else ToastAndroid.show('Please fill all details', ToastAndroid.LONG);
+        }}
       />
     </AuthContainer>
   );
@@ -61,7 +69,7 @@ export function RegisterationScreen({navigation}) {
 
 const styles = StyleSheet.create({
   title: {
-    marginBottom: 40,
+    marginBottom: 10,
   },
   input: {
     marginVertical: 8,
